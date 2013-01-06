@@ -9,30 +9,34 @@ using log4net;
 
 namespace HashNash.FlickrUploader
 {
+    public class AppConfig
+    {
+        public bool ShouldPrintFileNamesOnly = Convert.ToBoolean(ConfigurationManager.AppSettings["justPrintFileNames"]);
+        public string FlickrDir = ConfigurationManager.AppSettings["flickrdir"];
+        public string FolderToScan = ConfigurationManager.AppSettings["foldertoscan"];
+        public string Apikey = ConfigurationManager.AppSettings["apikey"];
+        public string Apisecret = ConfigurationManager.AppSettings["apisecret"];
+        public string DbFilename = ConfigurationManager.AppSettings["dbfilename"];
+    }
+
     public class MainProgram
     {
         private static readonly ILog _log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        private Uploader _uploader;
+        private FlickrUploadMan _flickrUploadMan;
         private FlickrProxy _flproxy;
         private List<AImg> _pendingImagesForUpload;
         private List<AImg> _pendingImagesForAddSet;
         private List<AImg> _allimages;
         private IDataAccess _dataaccess;
-        private SetMan _setman;
+        private FlickrSetMan _setman;
         private bool _justPrintFileNames;
+        AppConfig config = new AppConfig();
 
         public void DO(string[] args)
         {
-            _justPrintFileNames = Convert.ToBoolean(ConfigurationManager.AppSettings["justPrintFileNames"]);
-            
-            string dir = Path.Combine( ConfigurationManager.AppSettings["flickrdir"] ,ConfigurationManager.AppSettings["foldertoscan"]);
-             
-        //DB setup
-            bool dbready = DoInitDb();
-            if (dbready == false)
-            {
-                return;
-            }
+            _justPrintFileNames = config.ShouldPrintFileNamesOnly;
+
+            string dir = Path.Combine(config.FlickrDir, config.FolderToScan);
 
             //see if there are files to upload
             bool proceed = DoInitCheck(dir);
@@ -53,13 +57,6 @@ namespace HashNash.FlickrUploader
 
         }
 
-        private bool DoInitDb()
-        {
-            _dataaccess = new DataAccess("test.sqlite");
-
-            return false;
-        }
-
         /// <summary>
         ///Populate _images,_pendingImagesForUpload,_pendingImagesForAddSet
         /// </summary>
@@ -68,14 +65,9 @@ namespace HashNash.FlickrUploader
         private bool DoInitCheck(string dir)
         {
             _log.InfoFormat("DoInitCheck: {0}", dir);
-
+            _dataaccess = new DataAccess();
             _allimages = _dataaccess.GetAllStatus(dir);
-
-            var fl = new FilesLister();
-            _allimages = fl.List(dir);
-
             _log.InfoFormat("Total Count :{0}", _allimages.Count);
-
             _pendingImagesForUpload = _allimages.Where(image => image.IsUploaded == false).ToList();
             _pendingImagesForAddSet = _allimages.Where(image => image.IsAddToSetCompleted == false).ToList();
 
@@ -100,7 +92,6 @@ namespace HashNash.FlickrUploader
         {
             _log.InfoFormat("Pending for upload : {0} out of {1}", _pendingImagesForUpload.Count, _allimages.Count);
             _log.InfoFormat("Pending for AddToSet : {0} out of {1}", _pendingImagesForAddSet.Count, _allimages.Count);
-
             _log.InfoFormat(" +++++++++++++  Printing Pending Images For Upload... +++++++++++++ ");
 
             foreach (var pendingUpload in _pendingImagesForUpload)
@@ -109,7 +100,6 @@ namespace HashNash.FlickrUploader
             }
 
             _log.InfoFormat(" +++++++++++++ END Printing Pending Images For Upload... +++++++++++++ ");
-
             _log.InfoFormat(" +++++++++++++  Printing Pending Images for AddToSet... +++++++++++++ ");
 
             foreach (var pendingAddToSet in _pendingImagesForAddSet)
@@ -118,21 +108,18 @@ namespace HashNash.FlickrUploader
             }
 
             _log.InfoFormat(" +++++++++++++ END Printing Pending Images for AddToSet... +++++++++++++ ");
-
         }
-
-
+        
         private void DoUpload(List<AImg> pendingImages)
         {
             _log.Info("DoUpload");
-
-            //Upload
             var pendcount = pendingImages.Count;
+            
             for (int i = 0; i < pendcount; i++)
             {
                 _log.InfoFormat("Uploading {0} of {1} . Details : {2}", i + 1, pendcount, pendingImages[i]);
 
-                _uploader.Upload(pendingImages[i]);
+                _flickrUploadMan.Upload(pendingImages[i]);
 
                 _dataaccess.SaveUploadStatus(pendingImages[i]);
 
@@ -150,7 +137,7 @@ namespace HashNash.FlickrUploader
         private void DoSet(List<AImg> pendingImagesForAddSet)
         {
             //Get photoset
-            _setman = new SetMan(_flproxy.FlickrObj);
+            _setman = new FlickrSetMan(_flproxy.FlickrObj);
 
             var groupedImages =
                 from img in pendingImagesForAddSet
@@ -213,7 +200,7 @@ namespace HashNash.FlickrUploader
 
             _flproxy.Set(verificationotp);
 
-            _uploader = new Uploader(_flproxy.FlickrObj);
+            _flickrUploadMan = new FlickrUploadMan(_flproxy.FlickrObj);
         }
     }
 }

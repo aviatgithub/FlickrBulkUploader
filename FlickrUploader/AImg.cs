@@ -5,6 +5,11 @@ namespace HashNash.FlickrUploader
 {
     public class AImg
     {
+        private FileInfo _fileInfo;
+        private string _folderName;
+        private string _fileName;
+        private string _photoSetName;
+
         public AImg(string fileFullPath)
         {
             if (string.IsNullOrEmpty(fileFullPath))
@@ -14,33 +19,72 @@ namespace HashNash.FlickrUploader
             else
             {
                 FileFullPath = fileFullPath;
-                FileName = Path.GetFileName(FileFullPath);
-
-                var fInfo = new FileInfo(FileFullPath);
-                FolderName = fInfo.Directory.Name;
-
-                PhotoSetName = new PhotosetNamer().GetPhotoSetName(fileFullPath);
             }
         }
 
         public string FileFullPath { get; private set; }
-        public string FolderName { get; private set; }
+
+        public FileInfo FileInfo
+        {
+            get
+            {
+                if (_fileInfo == null)
+                {
+                    _fileInfo = new FileInfo(FileFullPath);
+                }
+                return _fileInfo;
+            }
+        }
+
+        public string FolderName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_folderName))
+                {
+                    _folderName = FileInfo.Directory.Name;
+                }
+                return _folderName;
+            }
+        }
         
+        public string FileName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_fileName))
+                {
+                    _fileName = Path.GetFileName(FileFullPath);
+                }
+                return _fileName;
+            }
+        }
+
+        public string PhotoSetName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_photoSetName))
+                {
+                    _photoSetName = new PhotosetNamer().GetPhotoSetName(FileFullPath);
+                }
+                return _photoSetName;
+            }
+        }
+
         //Upload
-        public string FileName { get; private set; }
         public string FlickrPhotoId { get; set; }// From Flickr
         public bool IsUploaded { get; set; }
         public Exception UploadEx { get; set; }
         public DateTime DateUploaded { get; set; }
-        public int SecondsToUpload { get; set; }
+        public double SecondsToUpload { get; set; }
 
         //AddToSet
-        public string PhotoSetName { get; private set; }
         public string FlickrPhotoSetId { get;  set; }//From Flickr
         public bool IsAddToSetCompleted { get; set; }
         public Exception AddToSetEx { get; set; }
         public DateTime DateAddedToSet { get; set; }
-        public int SecondsToAddToSet { get; set; }
+        public double SecondsToAddToSet { get; set; }
 
         public string Print()
         {
@@ -56,7 +100,7 @@ namespace HashNash.FlickrUploader
             }
 
 
-            return string.Format(" {0},{1},{2},{3},{4},{5},{6},{7}", this.FileName, this.FolderName,
+            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7}", this.FileName, this.FolderName,
                                  this.FileFullPath,this.PhotoSetName,
                                  IsUploaded, IsAddToSetCompleted, FlickrPhotoId, exstrting);
         }

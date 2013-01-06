@@ -5,7 +5,7 @@ using log4net;
 
 namespace HashNash.FlickrUploader
 {
-    public class SetMan
+    public class FlickrSetMan
     {
         private static readonly ILog _log =
             LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -14,7 +14,7 @@ namespace HashNash.FlickrUploader
         
         private readonly Flickr _flickr;
 
-        public SetMan(Flickr flickr)
+        public FlickrSetMan(Flickr flickr)
         {
             _log.Info("ctor");
             _flickr = flickr;

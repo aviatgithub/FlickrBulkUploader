@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace HashNash.FlickrUploader
 {
@@ -9,18 +10,9 @@ namespace HashNash.FlickrUploader
 
         public List<AImg> List(string path)
         {
-            var imgs = new List<AImg>();
-
             log.InfoFormat("Fetching Files in this path :" + path);
 
-            foreach (string file in Directory.EnumerateFiles(
-                path, "*.jpg", SearchOption.AllDirectories))
-            {
-                imgs.Add(new AImg(file));
-
-            }
-
-            return imgs;
+            return Directory.EnumerateFiles(path, "*.jpg", SearchOption.AllDirectories).Select(file => new AImg(file)).ToList();
         }
     }
 }

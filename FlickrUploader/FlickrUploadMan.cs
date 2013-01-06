@@ -1,16 +1,17 @@
 ﻿using System;
+using System.Diagnostics;
 using FlickrNet;
 using log4net;
 
 namespace HashNash.FlickrUploader
 {
-    public class Uploader
+    public class FlickrUploadMan
     {
         private static readonly ILog _log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly Flickr _flickr;
 
-        public Uploader(Flickr flickr)
+        public FlickrUploadMan(Flickr flickr)
         {
             this._flickr = flickr;
         }
@@ -20,14 +21,20 @@ namespace HashNash.FlickrUploader
 
             try
             {
+                Stopwatch stopWatch = Stopwatch.StartNew();
+
                 string response = _flickr.UploadPicture(img.FileFullPath, img.FileName,
-                                                       description: string.Empty, 
-                                                       tags: string.Empty,
-                                                       isPublic: false,
-                                                       isFamily: false, isFriend: false);
+                                                        description: string.Empty,
+                                                        tags: string.Empty,
+                                                        isPublic: false,
+                                                        isFamily: false,
+                                                        isFriend: false);
+                stopWatch.Stop();
+                img.SecondsToUpload = stopWatch.Elapsed.TotalSeconds;
 
-                _log.DebugFormat("Upload success . Response :" + response);
+                _log.DebugFormat("Upload success. Took:{0}s. Response :{1}" ,img.DateUploaded, response);
 
+                img.DateUploaded = DateTime.Now;
                 img.FlickrPhotoId = response;
                 img.IsUploaded = true;
             }

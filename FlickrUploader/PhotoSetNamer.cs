@@ -12,7 +12,9 @@ namespace HashNash.FlickrUploader
        /// <returns></returns>
        public string GetPhotoSetName(string fullfilepath)
        {
-          string initPath = ConfigurationManager.AppSettings["foldertoscan"].ToLower();
+           var config = new AppConfig();
+
+           string initPath = config.FolderToScan.ToLower();
 
            string fullfilepathlower = fullfilepath.ToLower();
 
