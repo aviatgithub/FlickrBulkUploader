@@ -70,6 +70,12 @@ namespace HashNash.FlickrUploader
             try
             {
                 _flickr.PhotosetsAddPhoto(set.PhotosetId, img.FlickrPhotoId);
+
+
+                _log.DebugFormat("Add to Set success. Took:{0}s.", img.SecondsToUpload);
+
+                img.DateAddedToSet = DateTime.Now;
+                img.FlickrPhotoSetId = set.PhotosetId;
                 img.IsAddToSetCompleted = true;
             }
             catch (FlickrApiException ex)

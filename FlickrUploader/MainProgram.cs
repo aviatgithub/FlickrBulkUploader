@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,27 +8,6 @@ using log4net;
 
 namespace HashNash.FlickrUploader
 {
-    public class AppConfig
-    {
-        public AppConfig()
-        {
-
-     ShouldPrintFileNamesOnly = Convert.ToBoolean(ConfigurationManager.AppSettings["justPrintFileNames"]);
-         FlickrDir = ConfigurationManager.AppSettings["flickrdir"];
-         FolderToScan = ConfigurationManager.AppSettings["foldertoscan"];
-         Apikey = ConfigurationManager.AppSettings["apikey"];
-         Apisecret = ConfigurationManager.AppSettings["apisecret"];
-         DbFilename = ConfigurationManager.AppSettings["dbfilename"];
-            
-        }
-        public bool ShouldPrintFileNamesOnly { get; set; }
-        public string FlickrDir { get; set; }
-        public string FolderToScan { get; set; }
-        public string Apikey { get; set; }
-        public string Apisecret { get; set; }
-        public string DbFilename { get; set; }
-    }
-
     public class MainProgram
     {
         private static readonly ILog _log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -40,14 +18,11 @@ namespace HashNash.FlickrUploader
         private List<AImg> _allimages;
         private IDataAccess _dataaccess;
         private FlickrSetMan _setman;
-        private bool _justPrintFileNames;
-        AppConfig config = new AppConfig();
+        readonly AppConfig _config = new AppConfig();
 
-        public void DO(string[] args)
+        public void Do(string[] args)
         {
-            _justPrintFileNames = config.ShouldPrintFileNamesOnly;
-
-            string dir = Path.Combine(config.FlickrDir, config.FolderToScan);
+            string dir = Path.Combine(_config.FlickrDir, _config.FolderToScan);
 
             //see if there are files to upload
             bool proceed = DoInitCheck(dir);
@@ -90,27 +65,32 @@ namespace HashNash.FlickrUploader
 
             Print();
 
-            if (_justPrintFileNames)
+            if (_config.DebugMode)
             {
-                //test dataacess
-                _allimages[0].IsUploaded = true;
-                _allimages[0].DateUploaded = DateTime.Now;
-                _allimages[0].SecondsToUpload = 1.343;
-                _allimages[0].FlickrPhotoId = "fid";
-                _dataaccess.SaveUploadStatus(_allimages[0]);
+                Debug();
 
-                _allimages[0].IsAddToSetCompleted = true;
-                _allimages[0].DateAddedToSet = DateTime.Now;
-                _allimages[0].SecondsToAddToSet = 2.343;
-                _allimages[0].FlickrPhotoSetId = "fsid";
-                _dataaccess.SaveAddToSetStatus(_allimages[0]);
-
-
-                _log.InfoFormat("justPrintFileNames..  Quiting...");
+                _log.InfoFormat("in Debug Mode..  Quiting...");
                 return false;
             }
 
             return true;
+        }
+
+        private void Debug()
+        {
+
+            //test dataacess
+            _allimages[0].IsUploaded = true;
+            _allimages[0].DateUploaded = DateTime.Now;
+            _allimages[0].SecondsToUpload = 1.343;
+            _allimages[0].FlickrPhotoId = "fid";
+            _dataaccess.SaveUploadStatus(_allimages[0]);
+
+            _allimages[0].IsAddToSetCompleted = true;
+            _allimages[0].DateAddedToSet = DateTime.Now;
+            _allimages[0].SecondsToAddToSet = 2.343;
+            _allimages[0].FlickrPhotoSetId = "fsid";
+            _dataaccess.SaveAddToSetStatus(_allimages[0]);
         }
 
         private void Print()
@@ -134,7 +114,26 @@ namespace HashNash.FlickrUploader
 
             _log.InfoFormat(" +++++++++++++ END Printing Pending Images for AddToSet... +++++++++++++ ");
         }
-        
+
+        private void DoAuth()
+        {
+            //upload
+
+            _flproxy = new FlickrProxy();
+            string url = _flproxy.GetAuthUrl();
+
+            _log.InfoFormat("Auth url : {0}", url);
+
+            Process.Start(url);
+
+            Console.WriteLine("\r\n Enter the verification Code: : : ");
+            string verificationotp = Console.ReadLine();
+
+            _flproxy.Set(verificationotp);
+
+            _flickrUploadMan = new FlickrUploadMan(_flproxy.FlickrObj);
+        }
+
         private void DoUpload(List<AImg> pendingImages)
         {
             _log.Info("DoUpload");
@@ -206,25 +205,6 @@ namespace HashNash.FlickrUploader
                 }//issetavailable - false
 
             }//end of foreach
-        }
-
-        private void DoAuth()
-        {
-            //upload
-
-            _flproxy = new FlickrProxy();
-            string url = _flproxy.GetAuthUrl();
-
-            _log.InfoFormat("Auth url : {0}", url);
-
-            Process.Start(url);
-
-            Console.WriteLine("\r\n Enter the verification Code: : : ");
-            string verificationotp = Console.ReadLine();
-
-            _flproxy.Set(verificationotp);
-
-            _flickrUploadMan = new FlickrUploadMan(_flproxy.FlickrObj);
-        }
+        }      
     }
 }

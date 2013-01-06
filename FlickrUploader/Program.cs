@@ -16,7 +16,7 @@ namespace HashNash.FlickrUploader
 
             try
             {
-                new MainProgram().DO(args);
+                new MainProgram().Do(args);
 
             }
             catch (Exception ex)

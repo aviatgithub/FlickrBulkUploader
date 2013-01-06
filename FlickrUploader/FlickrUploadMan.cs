@@ -24,15 +24,15 @@ namespace HashNash.FlickrUploader
                 Stopwatch stopWatch = Stopwatch.StartNew();
 
                 string response = _flickr.UploadPicture(img.FileFullPath, img.FileName,
-                                                        description: string.Empty,
-                                                        tags: string.Empty,
+                                                        description: img.FolderName,
+                                                        tags: img.FolderName,
                                                         isPublic: false,
                                                         isFamily: false,
                                                         isFriend: false);
                 stopWatch.Stop();
                 img.SecondsToUpload = stopWatch.Elapsed.TotalSeconds;
 
-                _log.DebugFormat("Upload success. Took:{0}s. Response :{1}" ,img.DateUploaded, response);
+                _log.DebugFormat("Upload success. Took:{0}s. Response :{1}" ,img.SecondsToUpload, response);
 
                 img.DateUploaded = DateTime.Now;
                 img.FlickrPhotoId = response;

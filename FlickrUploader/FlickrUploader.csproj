@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AImg.cs" />
+    <Compile Include="AppConfig.cs" />
     <Compile Include="DataAccess.cs" />
     <Compile Include="FilesLister.cs" />
     <Compile Include="FlickrProxy.cs" />
