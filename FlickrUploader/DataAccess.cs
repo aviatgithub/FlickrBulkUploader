@@ -39,7 +39,7 @@ namespace HashNash.FlickrUploader
                 _log.Info("creating new");
                 SQLiteConnection.CreateFile(dbname);
 
-                string sql = string.Format("CREATE TABLE {0} ({1} TEXT,{2} TEXT,{3} TEXT,{4} DATE,{5} DATE, {6} INT,{7} INT)",
+                string sql = string.Format("CREATE TABLE {0} ({1} TEXT,{2} TEXT,{3} TEXT,{4} DATETIME,{5} DATETIME, {6} REAL,{7} REAL)",
                                            tblImages,
                                            colFullFilePath,//1
                                            colFlickrImgId,//2
@@ -62,12 +62,12 @@ namespace HashNash.FlickrUploader
             }
         }
 
+        /// <summary>
+        /// Creates new conn and Opens it. 
+        /// Note:Make sure to close this when completed.
+        /// </summary>
         private SQLiteConnection GetConnection()
         {
-            //var dbConnection =
-            //    new SQLiteConnection("Data Source=test.sqlite;Version=3;");
-
-
             var dbConnection = new SQLiteConnection(string.Format("Data Source={0};Version=3;", _dbName));
             dbConnection.Open();
             return dbConnection;
@@ -83,11 +83,11 @@ namespace HashNash.FlickrUploader
             string updateUpload = string.Format("update {0} " +
                                                 "set {1} = \"{2}\" ," +
                                                 " {3} = \"{4}\" ," +
-                                                " {5} = \"{6}\"," +
+                                                " {5} = \"{6}\"" +
                                                 "where {7} = \"{8}\"",
                                                 tblImages,
                                                 colFlickrImgId, img.FlickrPhotoId,
-                                                colDateUploaded, img.DateUploaded,
+                                                colDateUploaded, img.DateUploaded.ToString("yyyy-MM-dd HH:mm:ss.000"),
                                                 colSecondsToUpload, img.SecondsToUpload,
                                                 colFullFilePath, img.FileFullPath);
 
@@ -110,11 +110,11 @@ namespace HashNash.FlickrUploader
             string updateAddToSet = string.Format("update {0} " +
                                                   "set {1} = \"{2}\" ," +
                                                   " {3} = \"{4}\" ," +
-                                                  " {5} = \"{6}\" ," +
+                                                  " {5} = \"{6}\"" +
                                                   "where {7} = \"{8}\"",
                                                   tblImages,
                                                   colFlickrPhotoSetId, img.FlickrPhotoSetId,
-                                                  colDateAddedToSet, img.DateAddedToSet,
+                                                  colDateAddedToSet, img.DateAddedToSet.ToString("yyyy-MM-dd HH:mm:ss.000"),
                                                   colSecondsToAddToSet, img.SecondsToAddToSet,
                                                   colFullFilePath, img.FileFullPath);
 
@@ -173,65 +173,29 @@ namespace HashNash.FlickrUploader
             }
             
             Update(imgsInDB,imagesInFilePath);
-            
-            //var adapter = new SQLiteDataAdapter(sqlselect, conn);
-            //conn.Open();
-            //var ds2 = new DataSet();
-            //adapter.Fill(ds2);
-            //conn.Close();
-
-            //var imgstable =  ds2.Tables[0];
-
-            //foreach (AImg aImg in imagesInFilePath)
-            //{
-            //    var aimgwithingforeachloop = aImg;
-
-            //    var q = from row in imgstable.AsEnumerable()
-            //            where row[colFullFilePath].ToString().ToLower() == aimgwithingforeachloop.FileFullPath.ToLower()
-            //            select new 
-            //                {
-            //                    tFullFilePath = ConvertToString( row[colFullFilePath]),
-            //                    tFlickrId =ConvertToString(row[colFlickrImgId]),
-            //                    tFlickrPSId = ConvertToString(row[colFlickrPhotoSetId])
-            //                };
-
-            //    if (q.Any())
-            //    {
-            //        var matchingrow = q.First();
-            //        //ignore
-            //        aImg.IsUploaded = !string.IsNullOrWhiteSpace(matchingrow.tFlickrId);
-            //        aImg.IsAddToSetCompleted = !string.IsNullOrWhiteSpace(matchingrow.tFlickrPSId);
-            //        aImg.FlickrPhotoId = matchingrow.tFlickrId;
-
-            //    }
-            //    else
-            //    {
-            //        //not present in db. not possible
-            //        AddToDb(aImg.FileFullPath);
-            //    }
-            //}
-
+           
             return imagesInFilePath;
         }
 
-        private void Update(List<AImg> imgsInDb, List<AImg> imagesInFilePath)
+        private void Update(List<AImg> imgListInDb, List<AImg> imgListInFilePath)
         {
-            foreach (var imgInFilePath in imagesInFilePath)
+            foreach (var imgInFilePath in imgListInFilePath)
             {
-                var matchingImgInDB =
-                    imgsInDb.FirstOrDefault(x => x.FileFullPath.ToLower() == imgInFilePath.FileFullPath.ToLower());
+                var matchingImgInDb =
+                    imgListInDb.FirstOrDefault(imgInDb => imgInDb.IsEqualToPath(imgInFilePath.FileFullPath));
                 
-                if (matchingImgInDB == null)
+                if (matchingImgInDb == null)
                 {
                     //not in DB. This is a newly added file in the folder. Add to DB
                     AddToDb(imgInFilePath.FileFullPath);
                 }
                 else
                 {
-                    imgInFilePath.IsUploaded            = matchingImgInDB.IsUploaded;
-                    imgInFilePath.IsAddToSetCompleted   = matchingImgInDB.IsAddToSetCompleted;
-                    imgInFilePath.FlickrPhotoId         = matchingImgInDB.FlickrPhotoId;
-                    imgInFilePath.FlickrPhotoSetId      = matchingImgInDB.FlickrPhotoSetId;
+                    //Update status from DB 
+                    imgInFilePath.IsUploaded            = matchingImgInDb.IsUploaded;
+                    imgInFilePath.IsAddToSetCompleted   = matchingImgInDb.IsAddToSetCompleted;
+                    imgInFilePath.FlickrPhotoId         = matchingImgInDb.FlickrPhotoId;
+                    imgInFilePath.FlickrPhotoSetId      = matchingImgInDb.FlickrPhotoSetId;
                 }
             }
         }

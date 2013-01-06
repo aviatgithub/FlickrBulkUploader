@@ -11,12 +11,23 @@ namespace HashNash.FlickrUploader
 {
     public class AppConfig
     {
-        public bool ShouldPrintFileNamesOnly = Convert.ToBoolean(ConfigurationManager.AppSettings["justPrintFileNames"]);
-        public string FlickrDir = ConfigurationManager.AppSettings["flickrdir"];
-        public string FolderToScan = ConfigurationManager.AppSettings["foldertoscan"];
-        public string Apikey = ConfigurationManager.AppSettings["apikey"];
-        public string Apisecret = ConfigurationManager.AppSettings["apisecret"];
-        public string DbFilename = ConfigurationManager.AppSettings["dbfilename"];
+        public AppConfig()
+        {
+
+     ShouldPrintFileNamesOnly = Convert.ToBoolean(ConfigurationManager.AppSettings["justPrintFileNames"]);
+         FlickrDir = ConfigurationManager.AppSettings["flickrdir"];
+         FolderToScan = ConfigurationManager.AppSettings["foldertoscan"];
+         Apikey = ConfigurationManager.AppSettings["apikey"];
+         Apisecret = ConfigurationManager.AppSettings["apisecret"];
+         DbFilename = ConfigurationManager.AppSettings["dbfilename"];
+            
+        }
+        public bool ShouldPrintFileNamesOnly { get; set; }
+        public string FlickrDir { get; set; }
+        public string FolderToScan { get; set; }
+        public string Apikey { get; set; }
+        public string Apisecret { get; set; }
+        public string DbFilename { get; set; }
     }
 
     public class MainProgram
@@ -81,6 +92,20 @@ namespace HashNash.FlickrUploader
 
             if (_justPrintFileNames)
             {
+                //test dataacess
+                _allimages[0].IsUploaded = true;
+                _allimages[0].DateUploaded = DateTime.Now;
+                _allimages[0].SecondsToUpload = 1.343;
+                _allimages[0].FlickrPhotoId = "fid";
+                _dataaccess.SaveUploadStatus(_allimages[0]);
+
+                _allimages[0].IsAddToSetCompleted = true;
+                _allimages[0].DateAddedToSet = DateTime.Now;
+                _allimages[0].SecondsToAddToSet = 2.343;
+                _allimages[0].FlickrPhotoSetId = "fsid";
+                _dataaccess.SaveAddToSetStatus(_allimages[0]);
+
+
                 _log.InfoFormat("justPrintFileNames..  Quiting...");
                 return false;
             }
@@ -96,7 +121,7 @@ namespace HashNash.FlickrUploader
 
             foreach (var pendingUpload in _pendingImagesForUpload)
             {
-                _log.Info(pendingUpload.Print());
+                _log.Info(pendingUpload.ToString());
             }
 
             _log.InfoFormat(" +++++++++++++ END Printing Pending Images For Upload... +++++++++++++ ");
@@ -104,7 +129,7 @@ namespace HashNash.FlickrUploader
 
             foreach (var pendingAddToSet in _pendingImagesForAddSet)
             {
-                _log.Info(pendingAddToSet.Print());
+                _log.Info(pendingAddToSet.ToString());
             }
 
             _log.InfoFormat(" +++++++++++++ END Printing Pending Images for AddToSet... +++++++++++++ ");
@@ -129,9 +154,8 @@ namespace HashNash.FlickrUploader
 
             foreach (var pendingImage in pendingImages)
             {
-                _log.Info(pendingImage.Print());
+                _log.Info(pendingImage.ToString());
             }
-
         }
 
         private void DoSet(List<AImg> pendingImagesForAddSet)

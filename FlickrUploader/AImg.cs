@@ -18,12 +18,13 @@ namespace HashNash.FlickrUploader
             }
             else
             {
-                FileFullPath = fileFullPath;
+                FileFullPath = fileFullPath.ToLower();
             }
         }
 
         public string FileFullPath { get; private set; }
 
+        
         public FileInfo FileInfo
         {
             get
@@ -86,25 +87,6 @@ namespace HashNash.FlickrUploader
         public DateTime DateAddedToSet { get; set; }
         public double SecondsToAddToSet { get; set; }
 
-        public string Print()
-        {
-            string exstrting = "";
-            if (UploadEx != null)
-            {
-                exstrting = UploadEx.ToString();
-            }
-
-            if (AddToSetEx != null)
-            {
-                exstrting += AddToSetEx.ToString();
-            }
-
-
-            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7}", this.FileName, this.FolderName,
-                                 this.FileFullPath,this.PhotoSetName,
-                                 IsUploaded, IsAddToSetCompleted, FlickrPhotoId, exstrting);
-        }
-
         public override string ToString()
         {
             string exstrting = "";
@@ -118,8 +100,13 @@ namespace HashNash.FlickrUploader
                 exstrting += AddToSetEx.ToString();
             }
 
-            return string.Format(" {0},{1},Upload:{2},AddToSet:{3},{4},{5},{6},{7}", this.FileName, this.FolderName,
-               IsUploaded, IsAddToSetCompleted,this.FileFullPath,this.PhotoSetName, FlickrPhotoId, exstrting);
+            return string.Format(" {0},{1},Upload:{2},AddToSet:{3},{4},{5},{6},{7}", this.FileName,this.PhotoSetName,
+               IsUploaded, IsAddToSetCompleted, this.PhotoSetName, FlickrPhotoId, FlickrPhotoSetId, exstrting);
+        }
+
+        public bool IsEqualToPath(String filepath)
+        {
+            return filepath.ToLower() == FileFullPath;
         }
     }
 }
