@@ -13,6 +13,8 @@ namespace HashNash.FlickrUploader
             Apikey = ConfigurationManager.AppSettings["apikey"];
             Apisecret = ConfigurationManager.AppSettings["apisecret"];
             DbFilename = ConfigurationManager.AppSettings["dbfilename"];
+            OAuthAccessToken = ConfigurationManager.AppSettings["OAuthAccessToken"];
+
         }
 
         public string FlickrDir { get; set; }
@@ -21,5 +23,14 @@ namespace HashNash.FlickrUploader
         public string Apisecret { get; set; }
         public string DbFilename { get; set; }
         public bool DebugMode { get; set; }
+        public string OAuthAccessToken { get; set; }
+
+        public void UpdateVerificationCode(string token)
+        {
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            config.AppSettings.Settings["OAuthAccessToken"].Value = token;
+            config.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection("appSettings");
+        }
     }
 }

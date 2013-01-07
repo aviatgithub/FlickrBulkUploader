@@ -30,21 +30,13 @@ namespace HashNash.FlickrUploader
                                                         isFamily: false,
                                                         isFriend: false);
                 stopWatch.Stop();
-                img.SecondsToUpload = stopWatch.Elapsed.TotalSeconds;
-
-                _log.DebugFormat("Upload success. Took:{0}s. Response :{1}" ,img.SecondsToUpload, response);
-
-                img.DateUploaded = DateTime.Now;
-                img.FlickrPhotoId = response;
-                img.IsUploaded = true;
+                _log.DebugFormat("Upload success. Took:{0}s. Response :{1}", stopWatch.Elapsed.TotalSeconds, response);
+                img.UpdateFlickrPhotoId(response, DateTime.Now, stopWatch.Elapsed.TotalSeconds);
             }
             catch (Exception ex)
             {
-                img.IsUploaded = false;
                 img.UploadEx = ex;
-
                 _log.Error(string.Format("error uploading " + img.FileFullPath), ex);
-
             }
         }
     }

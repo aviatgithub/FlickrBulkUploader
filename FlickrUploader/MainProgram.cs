@@ -36,11 +36,19 @@ namespace HashNash.FlickrUploader
             DoAuth();
 
             //Auth succeeded
+            
 
-            DoUpload(_pendingImagesForUpload);
+            if (_config.DebugMode)
+            {
+                DebugSettingsSave();
+                // DebugDataAccess();
 
-            DoSet(_pendingImagesForAddSet);
+                _log.InfoFormat("in Debug Mode..  Quiting...");
+                return;
+            }
 
+            DoFlickrUpload(_pendingImagesForUpload);
+            DoFlickrAddToSet(_pendingImagesForAddSet);
         }
 
         /// <summary>
@@ -65,32 +73,31 @@ namespace HashNash.FlickrUploader
 
             Print();
 
-            if (_config.DebugMode)
-            {
-                Debug();
-
-                _log.InfoFormat("in Debug Mode..  Quiting...");
-                return false;
-            }
+           
 
             return true;
         }
 
-        private void Debug()
+        private void DebugSettingsSave()
+        {
+            //_config.UpdateVerificationCode("testupdate");
+        }
+
+        private void DebugDataAccess()
         {
 
-            //test dataacess
-            _allimages[0].IsUploaded = true;
-            _allimages[0].DateUploaded = DateTime.Now;
-            _allimages[0].SecondsToUpload = 1.343;
-            _allimages[0].FlickrPhotoId = "fid";
-            _dataaccess.SaveUploadStatus(_allimages[0]);
+            ////test dataacess
+            //_allimages[0].IsUploaded = true;
+            //_allimages[0].DateUploaded = DateTime.Now;
+            //_allimages[0].SecondsToUpload = 1.343;
+            //_allimages[0].FlickrPhotoId = "fid";
+            //_dataaccess.SaveUploadStatus(_allimages[0]);
 
-            _allimages[0].IsAddToSetCompleted = true;
-            _allimages[0].DateAddedToSet = DateTime.Now;
-            _allimages[0].SecondsToAddToSet = 2.343;
-            _allimages[0].FlickrPhotoSetId = "fsid";
-            _dataaccess.SaveAddToSetStatus(_allimages[0]);
+            //_allimages[0].IsAddToSetCompleted = true;
+            //_allimages[0].DateAddedToSet = DateTime.Now;
+            //_allimages[0].SecondsToAddToSet = 2.343;
+            //_allimages[0].FlickrPhotoSetId = "fsid";
+            //_dataaccess.SaveAddToSetStatus(_allimages[0]);
         }
 
         private void Print()
@@ -117,36 +124,62 @@ namespace HashNash.FlickrUploader
 
         private void DoAuth()
         {
-            //upload
-
             _flproxy = new FlickrProxy();
-            string url = _flproxy.GetAuthUrl();
 
-            _log.InfoFormat("Auth url : {0}", url);
+            if (string.IsNullOrWhiteSpace(_config.OAuthAccessToken))
+            {
+                string url = _flproxy.GetFrobAuthUrl();
+                _log.InfoFormat("Auth url : {0}", url);
+                Process.Start(url); //
 
-            Process.Start(url);
+                Console.WriteLine(
+                    " \r\nClick authorize in Flickr Page");
 
-            Console.WriteLine("\r\n Enter the verification Code: : : ");
-            string verificationotp = Console.ReadLine();
-
-            _flproxy.Set(verificationotp);
-
-            _flickrUploadMan = new FlickrUploadMan(_flproxy.FlickrObj);
+                Console.ReadLine();
+                _flproxy.SetUserVerified();
+            }
+            else
+            {
+                _flproxy.Connect();
+            }
         }
-
-        private void DoUpload(List<AImg> pendingImages)
+        /*
+        private void DoAuth_NoFrob()
         {
-            _log.Info("DoUpload");
+            _flproxy = new FlickrProxy();
+
+            if (string.IsNullOrWhiteSpace(_config.OAuthAccessToken))
+            {
+
+                string url = _flproxy.GetAuthUrl();
+                _log.InfoFormat("Auth url : {0}", url);
+                Process.Start(url); //
+
+                Console.WriteLine(
+                    " \r\nClick authorize in Flickr Page,this will take to a diff page with verification code." +
+                    " \r\n Enter the verification Code: : : ");
+                
+                string verificationotp = Console.ReadLine();
+                _flproxy.SetVerificationCode(verificationotp);
+
+            }
+            else
+            {
+                _flproxy.SetToken(_config.OAuthAccessToken);
+            }
+        }
+        */
+        private void DoFlickrUpload(List<AImg> pendingImages)
+        {
+            _log.Info("DoFlickrUpload");
+            _flickrUploadMan = new FlickrUploadMan(_flproxy.FlickrObj);
             var pendcount = pendingImages.Count;
             
             for (int i = 0; i < pendcount; i++)
             {
                 _log.InfoFormat("Uploading {0} of {1} . Details : {2}", i + 1, pendcount, pendingImages[i]);
-
                 _flickrUploadMan.Upload(pendingImages[i]);
-
                 _dataaccess.SaveUploadStatus(pendingImages[i]);
-
             }
 
             _log.Info("Upload completed. Printing post upload status");
@@ -157,9 +190,9 @@ namespace HashNash.FlickrUploader
             }
         }
 
-        private void DoSet(List<AImg> pendingImagesForAddSet)
+        private void DoFlickrAddToSet(List<AImg> pendingImagesForAddSet)
         {
-            //Get photoset
+            _log.Info("DoFlickrAddToSet");
             _setman = new FlickrSetMan(_flproxy.FlickrObj);
 
             var groupedImages =
@@ -192,16 +225,16 @@ namespace HashNash.FlickrUploader
                     foreach (AImg aImg in grouping)
                     {
                         _setman.AddPhotoToSet(aImg, setForThisGroup);
+                        _dataaccess.SaveAddToSetStatus(aImg);
                     }
                 }
                 else
                 {
-                    //set all fotos  in this set to false..
-
-                    foreach (AImg aImg in grouping)
-                    {
-                        aImg.IsAddToSetCompleted = false; 
-                    }
+                    //ignore all fotos in this group
+                    //foreach (AImg aImg in grouping)
+                    //{
+                        //unable to create set or some other problem.
+                    //}
                 }//issetavailable - false
 
             }//end of foreach

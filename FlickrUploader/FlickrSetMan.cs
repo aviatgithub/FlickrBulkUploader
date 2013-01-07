@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using FlickrNet;
 using log4net;
@@ -27,23 +28,23 @@ namespace HashNash.FlickrUploader
         private void Refresh()
         {
             _collection = _flickr.PhotosetsGetList();
+
+//            _collection = _flickr.PhotosetsGetList(1,500);
         }
 
         private bool Exists(string photosetname,ref Photoset set)
         {
            Refresh();
 
-           set = _collection.FirstOrDefault(x => x.Title == photosetname);
+           set = _collection.FirstOrDefault(x => x.Title.ToLower() == photosetname.ToLower());
 
            _log.InfoFormat("this folder {0} {1} exists as set.", photosetname, set != null ? "" : "DOES NOT");
 
             return set != null;
         }
 
-        //THis is called for each grouping
-
         /// <summary>
-        /// This can throw exception !!!
+        /// This is called for each grouping.This can throw exception !!!
         /// </summary>
         /// <param name="photosetname"></param>
         /// <param name="photoid"></param>
@@ -65,36 +66,32 @@ namespace HashNash.FlickrUploader
 
         public void AddPhotoToSet(AImg img,Photoset set)
         {
-            _log.InfoFormat("adding {0} to photoset : {1}",img.FileFullPath,set.Title);
+            _log.InfoFormat("adding {0} to photoset : {1}",img.FileFullPath,set.PhotosetId);
 
             try
             {
+                Stopwatch stopWatch = Stopwatch.StartNew();
                 _flickr.PhotosetsAddPhoto(set.PhotosetId, img.FlickrPhotoId);
-
-
-                _log.DebugFormat("Add to Set success. Took:{0}s.", img.SecondsToUpload);
-
-                img.DateAddedToSet = DateTime.Now;
-                img.FlickrPhotoSetId = set.PhotosetId;
-                img.IsAddToSetCompleted = true;
+                stopWatch.Stop();
+                _log.DebugFormat("Add to Set success. Took:{0}s.", stopWatch.Elapsed.TotalSeconds);
+                img.UpdatePhotosetId(set.PhotosetId, DateTime.Now, stopWatch.Elapsed.TotalSeconds);
             }
             catch (FlickrApiException ex)
             {
                 if (ex.Code == 3) //photo already exists.
                 {
-                    img.IsAddToSetCompleted = true; //DONT consider this as failure
+                    //DONT consider this as failure
+                    img.UpdatePhotosetId(set.PhotosetId, DateTime.Now, 0);
                 }
                 else
                 {
                     img.AddToSetEx = ex;
-                    img.IsAddToSetCompleted = false;
                     _log.Error(string.Format("Failed to add {0} to photoset : {1}", img.FileFullPath, set.Title), ex);
                 }
             }
             catch (Exception ex)
             {
                 img.AddToSetEx = ex;
-                img.IsAddToSetCompleted = false;
                 _log.Error(string.Format("Failed to add {0} to photoset : {1}", img.FileFullPath, set.Title), ex);
             }
         }

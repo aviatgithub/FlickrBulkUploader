@@ -24,7 +24,7 @@ namespace HashNash.FlickrUploader
 
         public string FileFullPath { get; private set; }
 
-        
+
         public FileInfo FileInfo
         {
             get
@@ -48,7 +48,15 @@ namespace HashNash.FlickrUploader
                 return _folderName;
             }
         }
-        
+
+        /// <summary>
+        /// Size in bytes.
+        /// </summary>
+        public long Size
+        {
+            get { return FileInfo.Length; }
+        }
+
         public string FileName
         {
             get
@@ -73,19 +81,20 @@ namespace HashNash.FlickrUploader
             }
         }
 
+
         //Upload
-        public string FlickrPhotoId { get; set; }// From Flickr
-        public bool IsUploaded { get; set; }
+        public string FlickrPhotoId { get; private set; }// From Flickr
+        public bool IsUploaded { get; private set; }
         public Exception UploadEx { get; set; }
-        public DateTime DateUploaded { get; set; }
-        public double SecondsToUpload { get; set; }
+        public DateTime DateUploaded { get;private set; }
+        public double SecondsToUpload { get; private set; }
 
         //AddToSet
-        public string FlickrPhotoSetId { get;  set; }//From Flickr
-        public bool IsAddToSetCompleted { get; set; }
+        public string FlickrPhotoSetId { get; private set; }//From Flickr
+        public bool IsAddToSetCompleted { get; private set; }
         public Exception AddToSetEx { get; set; }
-        public DateTime DateAddedToSet { get; set; }
-        public double SecondsToAddToSet { get; set; }
+        public DateTime DateAddedToSet { get; private set; }
+        public double SecondsToAddToSet { get; private set; }
 
         public override string ToString()
         {
@@ -100,13 +109,37 @@ namespace HashNash.FlickrUploader
                 exstrting += AddToSetEx.ToString();
             }
 
-            return string.Format(" {0},{1},Upload:{2},AddToSet:{3},{4},{5},{6},{7}", this.FileName,this.PhotoSetName,
+            return string.Format(" {0},{1},Upload:{2},AddToSet:{3},{4},{5},{6},{7}", this.FileName, this.PhotoSetName,
                IsUploaded, IsAddToSetCompleted, this.PhotoSetName, FlickrPhotoId, FlickrPhotoSetId, exstrting);
+        }
+
+        public void UpdatePhotosetId(string flickrpsid,DateTime date = default (DateTime),double seconds =0)
+        {
+            if (string.IsNullOrWhiteSpace(flickrpsid))
+            {
+                throw new ArgumentNullException("flickrpsid");
+            }
+            FlickrPhotoSetId = flickrpsid;
+            IsAddToSetCompleted = true;
+            DateAddedToSet = date;
+            SecondsToAddToSet = seconds;
         }
 
         public bool IsEqualToPath(String filepath)
         {
             return filepath.ToLower() == FileFullPath;
+        }
+
+        public void UpdateFlickrPhotoId(string flickrid, DateTime date = default (DateTime),double seconds =0)
+        {
+            if (string.IsNullOrWhiteSpace(flickrid))
+            {
+                throw new ArgumentNullException("flickrid");
+            }
+            FlickrPhotoId = flickrid;
+            IsUploaded = true;
+            DateUploaded = date;
+            SecondsToUpload = seconds;
         }
     }
 }

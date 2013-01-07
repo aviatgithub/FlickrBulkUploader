@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using FlickrNet;
+﻿using FlickrNet;
 using log4net;
 
 namespace HashNash.FlickrUploader
@@ -10,39 +9,62 @@ namespace HashNash.FlickrUploader
         private static readonly ILog _log =
             LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly Flickr _flickrObj;
+        private  Flickr _flickrObj;
         private OAuthRequestToken _requestToken;
+        private string _frob;
+        
+        private static Flickr CreateFlickr()
+        {
+            Flickr.CacheDisabled = true;
+            var config = new AppConfig();
 
+            var newflickr = new Flickr(
+                apiKey: config.Apikey,
+                sharedSecret: config.Apisecret,
+                token: config.OAuthAccessToken); //token can be null.
+
+            return newflickr;
+        }
+
+        public FlickrProxy()
+        {
+            _log.Info("ctor");
+        }
 
         public Flickr FlickrObj
         {
             get { return _flickrObj; }
         }
 
-        public FlickrProxy()
+        public string GetFrobAuthUrl()
         {
-            _log.Info("ctor");
-
-            string apikey = ConfigurationManager.AppSettings["apikey"];
-            string apisecret = ConfigurationManager.AppSettings["apisecret"];
-
-            _flickrObj = new Flickr(apiKey: apikey, sharedSecret: apisecret);
+            _flickrObj = CreateFlickr();
+            _frob  = _flickrObj.AuthGetFrob();
+            return _flickrObj.AuthCalcUrl(_frob, AuthLevel.Write);
         }
 
-        public string GetAuthUrl()
+       
+
+        /// <summary>
+        /// uses authtoken from config and tries to connect. if there is any error throw exception.
+        /// </summary>
+        public void Connect()
         {
-            _requestToken = _flickrObj.OAuthGetRequestToken("http://google.com");
-            return _flickrObj.OAuthCalculateAuthorizationUrl(_requestToken.Token, AuthLevel.Write);
+            _flickrObj = CreateFlickr();
+            Auth authorization = _flickrObj.AuthCheckToken(_flickrObj.AuthToken);
+            string userId = authorization.User.UserId;
         }
 
-        public void Set(string verificationCode)
+        /// <summary>
+        /// saves authtoken in config and calls Connect()
+        /// </summary>
+        public void SetUserVerified()
         {
-            _log.InfoFormat("code : {0}", verificationCode);
-
-            var accessToken = _flickrObj.OAuthGetAccessToken(_requestToken, verificationCode);
-
-            _flickrObj.OAuthAccessToken = accessToken.Token;
-            _flickrObj.OAuthAccessTokenSecret = accessToken.TokenSecret;
+            var config = new AppConfig();
+            string authToken = _flickrObj.AuthGetToken(_frob).Token;
+            _log.InfoFormat("code : {0}", authToken);
+            config.UpdateVerificationCode(authToken);
+            Connect(); //verify if the user actually connected.
         }
     }
 }
