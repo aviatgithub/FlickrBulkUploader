@@ -10,9 +10,11 @@ namespace HashNash.FlickrUploader
         private static readonly ILog _log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly Flickr _flickr;
+        private AppConfig _config;
 
         public FlickrUploadMan(Flickr flickr)
         {
+             _config = new AppConfig();
             this._flickr = flickr;
         }
 
@@ -26,9 +28,9 @@ namespace HashNash.FlickrUploader
                 string response = _flickr.UploadPicture(img.FileFullPath, img.FileName,
                                                         description: img.FolderName,
                                                         tags: img.FolderName,
-                                                        isPublic: false,
-                                                        isFamily: false,
-                                                        isFriend: false);
+                                                        isPublic: _config.IsPrivate,
+                                                        isFamily: _config.IsPrivate,
+                                                        isFriend: _config.IsPrivate);
                 stopWatch.Stop();
                 _log.DebugFormat("Upload success. Took:{0}s. Response :{1}", stopWatch.Elapsed.TotalSeconds, response);
                 img.UpdateFlickrPhotoId(response, DateTime.Now, stopWatch.Elapsed.TotalSeconds);

@@ -36,19 +36,54 @@ namespace HashNash.FlickrUploader
             DoAuth();
 
             //Auth succeeded
-            
 
             if (_config.DebugMode)
             {
-                DebugSettingsSave();
+                //DebugSettingsSave();
                 // DebugDataAccess();
 
                 _log.InfoFormat("in Debug Mode..  Quiting...");
                 return;
             }
 
+            if (AcceptConfig() == false)
+            {
+                return;
+            }
+
             DoFlickrUpload(_pendingImagesForUpload);
             DoFlickrAddToSet(_pendingImagesForAddSet);
+
+            PrintCount();
+
+        }
+
+        private void PrintCount()
+        {
+            _log.InfoFormat("=====Upload status========");
+            _log.InfoFormat("Pending for upload : {0} ",_allimages.Count(x => x.IsUploaded == false));
+            _log.InfoFormat("=======Add to set status======");
+            _log.InfoFormat("Pending for add to set : {0} ",_allimages.Count(x => x.IsAddToSetCompleted == false));
+
+        }
+
+        private bool AcceptConfig()
+        {
+            _log.InfoFormat("db filename:{0}",_config.DbFilename);
+            _log.InfoFormat("IsPrivate:{0}", _config.IsPrivate);
+            _log.InfoFormat("FolderToScan:{0}", _config.FolderToScan);
+            _log.InfoFormat("FlickrDir:{0}", _config.FlickrDir);
+
+            Console.WriteLine("ready to print");
+
+            if (Console.ReadKey().Key == ConsoleKey.Y)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>

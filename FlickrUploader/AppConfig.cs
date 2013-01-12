@@ -14,7 +14,7 @@ namespace HashNash.FlickrUploader
             Apisecret = ConfigurationManager.AppSettings["apisecret"];
             DbFilename = ConfigurationManager.AppSettings["dbfilename"];
             OAuthAccessToken = ConfigurationManager.AppSettings["OAuthAccessToken"];
-
+            IsPrivate =Convert.ToBoolean( ConfigurationManager.AppSettings["IsPrivate"]);
         }
 
         public string FlickrDir { get; set; }
@@ -23,6 +23,7 @@ namespace HashNash.FlickrUploader
         public string Apisecret { get; set; }
         public string DbFilename { get; set; }
         public bool DebugMode { get; set; }
+        public bool IsPrivate { get; set; }
         public string OAuthAccessToken { get; set; }
 
         public void UpdateVerificationCode(string token)
