@@ -11,7 +11,7 @@ Before running this program:
 
 Update app.config
 
-1) flickr API key and secret.
+1) Goto https://www.flickr.com/services/apps/create/ and create flickr API key and secret.
 
 2) folder name: if your photos are at c:\folder1\Photos
 set foldertoscan : Photos and flickrfolder : c:\folder1
